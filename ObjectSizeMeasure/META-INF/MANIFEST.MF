@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ObjectSize
+Bundle-SymbolicName: ObjectSizeMeasure
+Bundle-Version: 1.0.0.qualifier
+Premain-Class: size.ObjectSizeFetcher
+Export-Package: size
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
