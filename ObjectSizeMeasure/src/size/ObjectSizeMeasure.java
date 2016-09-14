@@ -31,9 +31,13 @@ public class ObjectSizeMeasure {
 	}
 	
 	public static long getSizeInByte(Object o) {
-		long objectSize = ObjectSizeFetcher.getObjectSize(o) / 8;
-		printLog(0, o.getClass().getSimpleName(), objectSize);
-		return objectSize + getDeepSize(o, 1);
+		try {
+			long objectSize = ObjectSizeFetcher.getObjectSize(o) / 8;
+			printLog(0, o.getClass().getSimpleName(), objectSize);
+			return objectSize + getDeepSize(o, 1);
+		} finally {
+			MEASURED_OBJECTS.clear();
+		}
 	}
 
 	private static long getDeepSize(Object o, int depth) {
