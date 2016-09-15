@@ -4,7 +4,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -19,7 +21,25 @@ public class ObjectSizeMeasure {
 
 	public static boolean VERBOUS = false;
 	
-	private static final Set<Object> MEASURED_OBJECTS = new HashSet<>();
+	@SuppressWarnings("serial")
+	private static final Collection<Object> MEASURED_OBJECTS = new ArrayList<Object>() {
+		public boolean contains(Object o) {
+			if (o != null) {
+				Iterator<Object> itr = iterator();
+				while (itr.hasNext()) {
+					Object object = itr.next();
+					try { 
+						if (o.equals(object)) {
+							return true;
+						}
+					} catch (ClassCastException e) {
+						// nothing here
+					}
+				}
+	        }
+	        return false;
+		};
+	};
 
 	private static final Set<Class<?>> BLACK_LIST = new HashSet<>();
 	
@@ -71,11 +91,29 @@ public class ObjectSizeMeasure {
 			f.setAccessible(isAccesible);
 			size += getDeepSize(child, depth + 1);
 		}
+		
+		if (o.getClass().isArray()) {
+			if (o instanceof Object[]) {
+				Object[] objectArray = (Object[])o;
+				int index = 0;
+				for (Object object : objectArray) {
+					if (object == null) {
+						index++;
+						continue;
+					}
+					long objectSize = ObjectSizeFetcher.getObjectSize(object) / 8;
+					size += objectSize;
+					printLog(depth, "[" + index + "]", objectSize);
+					size += getDeepSize(object, depth + 1);
+					index++;
+				}
+			}
+		}
 		return size;
 	}
 
 	private static void printLog(int depth, String field, long objectSize) {
-		if (true) {
+		if (VERBOUS) {
 			for (int i = 0; i < depth; i++) {
 				System.out.print(" ");
 			}
