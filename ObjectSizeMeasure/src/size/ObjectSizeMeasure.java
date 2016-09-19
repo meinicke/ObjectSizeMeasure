@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -20,26 +19,27 @@ import java.util.Set;
 public class ObjectSizeMeasure {
 
 	public static boolean VERBOUS = false;
+
+	private static final Collection<IdentityWrapper> MEASURED_OBJECTS = new HashSet<>();
 	
-	@SuppressWarnings("serial")
-	private static final Collection<Object> MEASURED_OBJECTS = new ArrayList<Object>() {
-		public boolean contains(Object o) {
-			if (o != null) {
-				Iterator<Object> itr = iterator();
-				while (itr.hasNext()) {
-					Object object = itr.next();
-					try { 
-						if (o.equals(object)) {
-							return true;
-						}
-					} catch (ClassCastException e) {
-						// nothing here
-					}
-				}
-	        }
-	        return false;
-		};
-	};
+	private static class IdentityWrapper {
+		
+		final Object object;
+		
+		public IdentityWrapper(Object object) {
+			this.object = object;
+		}
+		
+		@Override
+		public int hashCode() {
+			return System.identityHashCode(object);
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			return object == ((IdentityWrapper)obj).object;			
+		}
+	}
 
 	private static final Set<Class<?>> BLACK_LIST = new HashSet<>();
 	
@@ -61,7 +61,7 @@ public class ObjectSizeMeasure {
 	}
 
 	private static long getDeepSize(Object o, int depth) {
-		MEASURED_OBJECTS.add(o);
+		MEASURED_OBJECTS.add(new IdentityWrapper(o));
 		
 		final List<Field> fields = new ArrayList<>(); 
 		getAllFields(o.getClass(), fields);
@@ -71,7 +71,9 @@ public class ObjectSizeMeasure {
 			if (Modifier.isStatic(f.getModifiers())) {
 				continue;
 			}
-			
+			if (f.getType().isPrimitive()) {
+				continue;
+			}
 			final boolean isAccesible = f.isAccessible();
 			f.setAccessible(true);
 			Object child;
@@ -81,7 +83,7 @@ public class ObjectSizeMeasure {
 				e.printStackTrace();
 				continue;
 			}
-			if (child == null || BLACK_LIST.contains(child.getClass()) || MEASURED_OBJECTS.contains(child)) {
+			if (child == null || BLACK_LIST.contains(child.getClass()) || MEASURED_OBJECTS.contains(new IdentityWrapper(child))) {
 				continue;
 			}
 			
@@ -97,13 +99,19 @@ public class ObjectSizeMeasure {
 				Object[] objectArray = (Object[])o;
 				int index = 0;
 				for (Object object : objectArray) {
-					if (object == null) {
+					if (object == null || BLACK_LIST.contains(object.getClass())) {
+						printLog(depth, "[" + index + "] null", 0);
+						index++;
+						continue;
+					}
+					if (MEASURED_OBJECTS.contains(new IdentityWrapper(object))) {
+						printLog(depth, "[" + index + "] " + object.getClass(), 0);
 						index++;
 						continue;
 					}
 					long objectSize = ObjectSizeFetcher.getObjectSize(object) / 8;
 					size += objectSize;
-					printLog(depth, "[" + index + "]", objectSize);
+					printLog(depth, "[" + index + "] " + object.getClass(), objectSize);
 					size += getDeepSize(object, depth + 1);
 					index++;
 				}
