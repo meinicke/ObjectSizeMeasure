@@ -1,4 +1,4 @@
-Estimates the "full" size of objects including thier fileds.
+Estimates the size of Java data structures.
 
 run: java -javaagent:ObjectSizeMeasure.jar Main
 
