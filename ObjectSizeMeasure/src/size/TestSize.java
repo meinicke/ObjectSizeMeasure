@@ -1,47 +1,38 @@
 package size;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
 public class TestSize {
-	
+
 	public static void main(String[] args) {
-		ObjectSizeMeasure.VERBOUS = true;
-		TestObject o = new TestObject();
-		System.out.println(ObjectSizeMeasure.getSizeInByte(o));
-		System.out.println("--------------");
-		System.out.println(ObjectSizeMeasure.getSizeInByte(o.object));
-		System.out.println("--------------");
-		System.out.println(ObjectSizeMeasure.getSizeInByte(o.array));
-		System.out.println("--------------");
-		System.out.println(ObjectSizeMeasure.getSizeInByte(o.integer));
-		System.out.println("--------------");
-		System.out.println(ObjectSizeMeasure.getSizeInByte(o.l));
-		
-		System.out.println("--------------");
-		ObjectSizeMeasure.VERBOUS = false;
-		Integer[] array = new Integer[10];
-		System.out.println("array size:" + ObjectSizeMeasure.getSizeInByte(array));
-		for (int i = 0; i < array.length; i++) {
-			array[i] = Integer.valueOf(i);
-			System.out.println("array size:" + ObjectSizeMeasure.getSizeInByte(array));
+		for (int size = 1; size <= 10_000; size *= 10) {
+			System.out.println("\nSize = " + size);
+			List<Object> ll = new LinkedList<>();
+			List<Object> al = new ArrayList<>();
+			List<Object> alInit = new ArrayList<>(size);
+			Set<Object> hset = new HashSet<>();
+			Set<Object> tset = new TreeSet<>();
+			Object[] oarray = new Object[size];
+			for (int i = 0; i < size; i++) {
+				Integer o = Integer.valueOf(i);
+				ll.add(o);
+				al.add(o);
+				alInit.add(o);
+				hset.add(o);
+				tset.add(o);
+				oarray[i] = o;
+			}
+			System.out.println("LinkedList:\t" + ObjectSizeMeasure.getSizeInByte(ll));
+			System.out.println("ArrayList:\t" + ObjectSizeMeasure.getSizeInByte(al));
+			System.out.println("ArrayList init:\t" + ObjectSizeMeasure.getSizeInByte(alInit));
+			System.out.println("HashSet:\t" + ObjectSizeMeasure.getSizeInByte(hset));
+			System.out.println("TreeSet:\t" + ObjectSizeMeasure.getSizeInByte(tset));
+			System.out.println("Array:\t\t" + ObjectSizeMeasure.getSizeInByte(oarray));
 		}
-		for (int i = 0; i < array.length; i++) {
-			array[i] = Integer.valueOf(100);
-			System.out.println("array size:" + ObjectSizeMeasure.getSizeInByte(array));
-		}
-		
 	}
 }
-
-class TestObject {
-	Object object = new Object();
-	Object[] array = new Object[10];
-	int integer = 1;
-	long l = 10;
-	
-	public TestObject() {
-		for (int i = 0; i < array.length; i++) {
-			array[i] = Integer.valueOf(i);
-		}
-			
-	}
-}
-
